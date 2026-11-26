@@ -4,9 +4,15 @@
   "description": "Internal CRM for ~100 employees: people, finances, login activity and usage tracking",
   "main": "src/server.js",
   "private": true,
-  "engines": { "node": ">=22.13" },
+  "engines": {
+    "node": ">=22.13"
+  },
   "scripts": {
+    "setup": "npm install && npm --prefix client install",
+    "build": "npm --prefix client run build",
     "start": "node --no-warnings=ExperimentalWarning src/server.js",
+    "dev:api": "node --no-warnings=ExperimentalWarning --watch src/server.js",
+    "dev:client": "npm --prefix client start",
     "seed": "node --no-warnings=ExperimentalWarning src/seed.js",
     "test": "node --no-warnings=ExperimentalWarning --test test/*.test.js"
   },

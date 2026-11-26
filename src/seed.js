@@ -95,6 +95,7 @@ function seed(db, { employees = 100, seed: s = 42 } = {}) {
     }
 
     // Transactions: ~6 months
+    const reviews = [];
     const insTx = db.prepare(`INSERT INTO transactions (user_id,type,category,amount,description,status,date,reviewed_by,reviewed_at,created_at)
       VALUES (?,?,?,?,?,?,?,?,?,?)`);
     for (const u of users) {
@@ -116,8 +117,9 @@ function seed(db, { employees = 100, seed: s = 42 } = {}) {
         const status = age < 10 ? (r() < 0.7 ? 'pending' : 'approved') : (r() < 0.08 ? 'rejected' : r() < 0.6 ? 'paid' : 'approved');
         const reviewer = status === 'pending' ? null : (u.role === 'employee' ? managers[u.department] : adminId);
         const reviewedAt = reviewer ? fmt(new Date(when.getTime() + between(1, 4) * 86400000)) : null;
-        insTx.run(u.id, r() < 0.8 ? 'expense' : 'reimbursement', cat, amount, `${cat} - ${pick(['client visit', 'team offsite', 'project work', 'conference', 'monthly', 'quarterly'])}`,
+        const t = insTx.run(u.id, r() < 0.8 ? 'expense' : 'reimbursement', cat, amount, `${cat} - ${pick(['client visit', 'team offsite', 'project work', 'conference', 'monthly', 'quarterly'])}`,
           status, day(when), reviewer, reviewedAt, fmt(when));
+        reviews.push({ reviewer, status, id: Number(t.lastInsertRowid), amount, at: reviewedAt, owner: u.id, created: fmt(when) });
       }
       if (r() < 0.15) {
         const when = daysAgo(between(0, 120));
@@ -156,6 +158,16 @@ function seed(db, { employees = 100, seed: s = 42 } = {}) {
         }
       }
     }
+    // Audit trail for submissions and approvals
+    for (const v of reviews) {
+      insAct.run(v.owner, 'create', 'transaction', v.id, JSON.stringify({ amount: v.amount }), null, v.created);
+      if (v.reviewer) {
+        const st = v.status === 'paid' ? 'approved' : v.status;
+        insAct.run(v.reviewer, st, 'transaction', v.id, JSON.stringify({ from: 'pending', amount: v.amount }), null, v.at);
+        if (v.status === 'paid') insAct.run(adminId, 'paid', 'transaction', v.id, JSON.stringify({ from: 'approved', amount: v.amount }), null, v.at);
+      }
+    }
+
     // A few suspicious failed attempts for unknown accounts
     for (let i = 0; i < 12; i++) {
       insLogin.run(null, pick(['root@acme.test', 'test@acme.test', 'admin@acme.com']), 0, 'bad_credentials', `203.0.113.${Math.floor(between(1, 254))}`,

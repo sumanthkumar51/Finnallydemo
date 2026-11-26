@@ -171,6 +171,19 @@ function createApp(db, opts = {}) {
     res.json({ ok: true });
   });
 
+  // Public, non-secret client configuration (analytics / maps IDs) read from environment variables.
+  // Each integration stays disabled in the browser until its ID is set.
+  app.get('/api/public-config', (req, res) => {
+    const env = opts.env || process.env;
+    res.json({
+      gaMeasurementId: env.GA_MEASUREMENT_ID || '',
+      gtmContainerId: env.GTM_CONTAINER_ID || '',
+      clarityProjectId: env.CLARITY_PROJECT_ID || '',
+      pendoApiKey: env.PENDO_API_KEY || '',
+      googleMapsApiKey: env.GOOGLE_MAPS_API_KEY || '',
+    });
+  });
+
   // Everything below requires login.
   app.use('/api', (req, res, next) => {
     if (!req.user) throw new HttpError(401, 'Not signed in');
