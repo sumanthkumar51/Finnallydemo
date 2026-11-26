@@ -23,6 +23,12 @@ An internal CRM for a company of about 100 employees. It tracks:
 | Build | Angular CLI (esbuild + **Babel**) |
 | Backend | Node.js 22 + Express 5, SQLite (Node's built-in `node:sqlite`, so there are no native modules to compile) |
 
+## Run it in your browser (no install)
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/sumanthkumar51/Finnallydemo?ref=claude/focused-sagan-y7j7q2)
+
+Click the button, then **Create codespace**. The first time, it takes about 3–5 minutes to install and build. After that the CRM opens in a new browser tab. If the tab doesn't open, go to the **Ports** tab and click the globe icon next to port 3000.
+
 ## Quick start
 
 Requires **Node.js 22.13 or newer**.
